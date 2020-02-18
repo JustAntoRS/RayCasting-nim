@@ -56,8 +56,8 @@ var
   diry : float =  0
   planeX : float = 0
   planeY : float = 0.66
-  time : float = 0
-  oldTime : float = 0
+  time : uint32 = 0
+  oldTime : uint32 = 0
   color : array[4, int] = [0,0,0,0]
 
 # ------ MAIN LOOP ------
@@ -65,7 +65,7 @@ var
 while runGame:
   render.setDrawColor(0,0,0,0)
   render.clear
-
+  oldTime = time
   for x in 0..640:
     var
       cameraX : float = 2.0 * float(x) / float(640) - 1
@@ -137,11 +137,11 @@ while runGame:
     render.setDrawColor(uint8(color[0]),uint8(color[1]),uint8(color[2]),uint8(color[3]))
     render.drawLine(cint(x),cint(drawStart),cint(x),cint(drawEnd))
 
-    oldTime = time
-    time = float(getTicks())
-    var frameTime : float = (time - oldTime) / 1000.0
-    var moveSpeed : float = frameTime * 5.0 + 1.0
-    var rotSpeed : float = frameTime * 3.0 + 1.0
+    time = getTicks()
+    var diff : uint32 = time - oldTime
+    var frameTime : float = float(diff) / 1000.0
+    var moveSpeed : float = frameTime *  10.0
+    var rotSpeed : float = frameTime * 3.0
 
     while pollEvent(evt):
       if evt.kind == QuitEvent:
