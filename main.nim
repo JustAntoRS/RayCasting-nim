@@ -17,7 +17,10 @@ var
   runGame = true
 
 # ------ GAME DATA ------
-
+#[
+  0 -> No wall
+  Other -> Wall (each number is a color)
+]#
 var worldMap =[
   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
   [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -54,18 +57,21 @@ var
   planeY : float = 0.66
   time : float = 0
   oldTime : float = 0
+  color : array[4, int] = [0,0,0,0]
 
 # ------ MAIN LOOP ------
 
 while runGame:
+  render.setDrawColor(0,0,0,0)
+  render.clear
   while pollEvent(evt):
     if evt.kind == QuitEvent:
       runGame = false
       break
 
-  for x in 0..24:
+  for x in 0..640:
     var
-      cameraX : float = 2.0 * float(x) / float(24) - 1
+      cameraX : float = 2.0 * float(x) / float(640) - 1
       rayDirX : float = dirX + planeX * cameraX
       rayDirY : float = dirY + planeY * cameraX
       mapX : int = int(posX)
@@ -94,6 +100,7 @@ while runGame:
       stepY = 1
       sideDistY = (float(mapY) + 1.0 - posY) * deltaDistY
 
+    # DDA Algorithm
     while hit == 0:
       if sideDistX < sideDistY:
         sideDistX += deltaDistX
@@ -106,9 +113,34 @@ while runGame:
 
       if worldMap[mapX][mapY] > 0 : hit = 1
 
-  render.setDrawColor(0,0,0,255)
-  render.clear
+    if side == 0:
+      perpWallDist = (float(mapX) - posX + (1 - stepX) / 2) / rayDirX
+    else:
+      perpWallDist = (float(mapY) - posY + (1 - stepY) / 2) / rayDirY
+
+    var lineHeight : int = (int) 480 / perpWallDist
+
+    var drawStart : int = int(-lineHeight / 2 + 640 / 2)
+    if drawStart < 0: drawStart = 0
+
+    var drawEnd : int = int(lineHeight / 2 + 640 / 2)
+    if drawEnd < 0: drawEnd = 640 - 1
+
+    case worldMap[mapX][mapY]
+    of 1: color = [245,66,66,255]
+    of 2: color = [66,255,95,255]
+    of 3: color = [66,81,245,255]
+    of 4: color = [0,0,0,255]
+    else: color = [244,240,2,255]
+
+    if side == 1:
+      color[3] = int(color[3] / 2)
+
+    render.setDrawColor(uint8(color[0]),uint8(color[1]),uint8(color[2]),uint8(color[3]))
+    render.drawLine(cint(x),cint(drawStart),cint(x),cint(drawEnd))
+
   render.present
 
 destroy render
 destroy window
+sdl2.quit()
