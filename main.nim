@@ -1,4 +1,5 @@
 import sdl2
+import math
 
 # ------ SDL2 CONF ------
 
@@ -8,8 +9,8 @@ var
   window : WindowPtr
   render : RendererPtr
 
-window = createWindow("NIM RayCasting", 100,100,640,480, SDL_WINDOW_SHOWN)
-render = createRenderer(window, -1, Renderer_Accelerated or Renderer_PresentVsync or Renderer_TargetTexture)
+window = createWindow("NIM RayCasting", 100,100,640,480, SDL_WINDOW_SHOWN or SDL_WINDOW_OPENGL)
+render = createRenderer(window, -1, Renderer_Accelerated or Renderer_PresentVsync)
 
 
 var
@@ -64,10 +65,6 @@ var
 while runGame:
   render.setDrawColor(0,0,0,0)
   render.clear
-  while pollEvent(evt):
-    if evt.kind == QuitEvent:
-      runGame = false
-      break
 
   for x in 0..640:
     var
@@ -127,20 +124,54 @@ while runGame:
     if drawEnd < 0: drawEnd = 640 - 1
 
     case worldMap[mapX][mapY]
-    of 1: color = [245,66,66,255]
-    of 2: color = [66,255,95,255]
-    of 3: color = [66,81,245,255]
-    of 4: color = [0,0,0,255]
-    else: color = [244,240,2,255]
+    of 1: color = [245,66,66,255] # Rojo
+    of 2: color = [66,255,95,255] # Verde
+    of 3: color = [66,81,245,255] # Azul
+    of 4: color = [255,255,255,255] # Blanco
+    else: color = [255,165,0,255] # Naranja
 
     if side == 1:
-      color[3] = int(color[3] / 2)
+      for i in 0..2:
+        color[i] = int(color[i] / 2)
 
     render.setDrawColor(uint8(color[0]),uint8(color[1]),uint8(color[2]),uint8(color[3]))
     render.drawLine(cint(x),cint(drawStart),cint(x),cint(drawEnd))
 
-  render.present
+    oldTime = time
+    time = float(getTicks())
+    var frameTime : float = (time - oldTime) / 1000.0
+    var moveSpeed : float = frameTime * 5.0 + 1.0
+    var rotSpeed : float = frameTime * 3.0 + 1.0
 
+    while pollEvent(evt):
+      if evt.kind == QuitEvent:
+        runGame = false
+        break
+      # LookUp table for ScanCodes -> https://wiki.libsdl.org/SDLScancode3Lookup
+      if evt.kind == KeyDown:
+        case int(evt.key.keysym.scancode)
+        of 26: # W Key
+          if worldMap[int(posX + dirX * moveSpeed)][int(posY)] == 0: posX += dirX * moveSpeed
+          if worldMap[int(posX)][int(posY + dirY * moveSpeed)] == 0: posY += dirY * moveSpeed
+        of 22: # S Key
+          if worldMap[int(posX - dirX * moveSpeed)][int(posY)] == 0: posX -= dirX * moveSpeed
+          if worldMap[int(posX)][int(posY - dirY * moveSpeed)] == 0: posY -= dirY * moveSpeed
+        of 4: # A Key
+          var oldDirX : float = dirX
+          dirX = dirX * cos(rotSpeed) - dirY * sin(rotSpeed)
+          dirY = oldDirX * sin(rotSpeed) + dirY * cos(rotSpeed)
+          var oldPlaneX : float = planeX
+          planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed)
+          planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed)
+        of 7: # D Key
+          var oldDirX : float = dirX
+          dirX = dirX * cos(-rotSpeed) - dirY * sin(-rotSpeed)
+          dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed)
+          var oldPlaneX : float = planeX
+          planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed)
+          planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed)
+        else: echo "tecla no soportada"
+  render.present
 destroy render
 destroy window
 sdl2.quit()
