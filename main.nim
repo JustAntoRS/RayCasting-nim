@@ -50,14 +50,15 @@ var worldMap =[
 ]
 
 var
-  posX : float = 22
-  posY : float = 12
-  dirX : float = -1
-  diry : float =  0
-  planeX : float = 0
-  planeY : float = 0.66
+  posX : cdouble = 22
+  posY : cdouble = 12
+  dirX : cdouble = -1
+  diry : cdouble =  0
+  planeX : cdouble = 0
+  planeY : cdouble = 0.66
   time : uint32 = 0
   oldTime : uint32 = 0
+
   color : array[4, int] = [0,0,0,0]
 
 # ------ MAIN LOOP ------
@@ -68,34 +69,34 @@ while runGame:
   oldTime = time
   for x in 0..640:
     var
-      cameraX : float = 2.0 * float(x) / float(640) - 1
-      rayDirX : float = dirX + planeX * cameraX
-      rayDirY : float = dirY + planeY * cameraX
-      mapX : int32 = int32(posX)
-      mapY : int32 = int32(posY)
-      sideDistX : float
-      sideDistY : float
-      deltaDistX : float = abs(1 / rayDirX)
-      deltaDistY : float = abs(1 / rayDirY)
-      perpWallDist : float
-      stepX : int32
-      stepY : int32
-      hit : int32 = 0
-      side : int32
+      cameraX : cdouble = 2 * x / 640 - 1
+      rayDirX : cdouble = dirX + planeX * cameraX
+      rayDirY : cdouble = dirY + planeY * cameraX
+      mapX : cint = cint(posX)
+      mapY : cint = cint(posY)
+      sideDistX : cdouble
+      sideDistY : cdouble
+      deltaDistX : cdouble = abs(1 / rayDirX)
+      deltaDistY : cdouble = abs(1 / rayDirY)
+      perpWallDist : cdouble
+      stepX : cint
+      stepY : cint
+      hit : cint = 0
+      side : cint
 
     if rayDirX < 0:
       stepX = -1
-      sideDistX = (posX - float(mapX) * deltaDistX)
+      sideDistX = (posX - cdouble(mapX)) * deltaDistX
     else:
       stepX = 1
-      sideDistX = (float(mapX) + 1.0 - posX) * deltaDistX
+      sideDistX = (cdouble(mapX) + 1.0 - posX) * deltaDistX
 
     if rayDirY < 0:
       stepY = -1
-      sideDistY = (posY - float(mapY)) * deltaDistY
+      sideDistY = (posY - cdouble(mapY)) * deltaDistY
     else:
       stepY = 1
-      sideDistY = (float(mapY) + 1.0 - posY) * deltaDistY
+      sideDistY = (cdouble(mapY) + 1.0 - posY) * deltaDistY
 
     # DDA Algorithm
     while hit == 0:
