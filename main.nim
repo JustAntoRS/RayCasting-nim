@@ -52,10 +52,10 @@ var worldMap =[
 var
   posX : float = 22
   posY : float = 12
-  dirX : float = -1
-  diry : float =  0
-  planeX : float = 0
-  planeY : float = 0.66
+  dirX : float32 = -1
+  diry : float32 =  0
+  planeX : float32 = 0
+  planeY : float32 = 0.66
   time : uint32 = 0
   oldTime : uint32 = 0
   color : array[4, int] = [0,0,0,0]
@@ -63,21 +63,21 @@ var
 # ------ MAIN LOOP ------
 
 while runGame:
-  render.setDrawColor(0,0,0,0)
+  render.setDrawColor(0,0,0,255)
   render.clear
   oldTime = time
   for x in 0..640:
     var
-      cameraX : float = 2.0 * float(x) / float(640) - 1
-      rayDirX : float = dirX + planeX * cameraX
-      rayDirY : float = dirY + planeY * cameraX
+      cameraX : float32 = 2.0 * float(x) / float(640) - 1
+      rayDirX : float32 = dirX + planeX * cameraX
+      rayDirY : float32 = dirY + planeY * cameraX
       mapX : int = int(posX)
       mapY : int = int(posY)
-      sideDistX : float
-      sideDistY : float
-      deltaDistX : float = abs(1 / rayDirX)
-      deltaDistY : float = abs(1 / rayDirY)
-      perpWallDist : float
+      sideDistX : float32
+      sideDistY : float32
+      deltaDistX : float32 = abs(1 / rayDirX)
+      deltaDistY : float32 = abs(1 / rayDirY)
+      perpWallDist : float32
       stepX : int
       stepY : int
       hit : int = 0
@@ -115,13 +115,13 @@ while runGame:
     else:
       perpWallDist = (float(mapY) - posY + (1 - stepY) / 2) / rayDirY
 
-    var lineHeight : int = (int) 480 / perpWallDist
+    var lineHeight : int = int(480 / perpWallDist)
 
-    var drawStart : int = int(-lineHeight / 2 + 640 / 2)
+    var drawStart : int = int(-lineHeight / 2 + 480 / 2)
     if drawStart < 0: drawStart = 0
 
-    var drawEnd : int = int(lineHeight / 2 + 640 / 2)
-    if drawEnd < 0: drawEnd = 640 - 1
+    var drawEnd : int = int(lineHeight / 2 + 480 / 2)
+    if drawEnd >= 480: drawEnd = 480 - 1
 
     case worldMap[mapX][mapY]
     of 1: color = [245,66,66,255] # Rojo
@@ -137,43 +137,44 @@ while runGame:
     render.setDrawColor(uint8(color[0]),uint8(color[1]),uint8(color[2]),uint8(color[3]))
     render.drawLine(cint(x),cint(drawStart),cint(x),cint(drawEnd))
 
-    time = getTicks()
-    var diff : uint32 = time - oldTime
-    var frameTime : float = float(diff) / 1000.0
-    var moveSpeed : float = frameTime *  20.0
-    var rotSpeed : float = frameTime * 6.0
-
-    while pollEvent(evt):
-      if evt.kind == QuitEvent:
-        runGame = false
-        break
-      # LookUp table for ScanCodes -> https://wiki.libsdl.org/SDLScancode3Lookup
-      if evt.kind == KeyDown:
-        if int(evt.key.keysym.scancode) == 26: # W Key
-          if worldMap[int(posX + dirX * moveSpeed)][int(posY)] == 0: posX += dirX * moveSpeed
-          if worldMap[int(posX)][int(posY + dirY * moveSpeed)] == 0: posY += dirY * moveSpeed
-
-        if int(evt.key.keysym.scancode) == 22: # S Key
-          if worldMap[int(posX - dirX * moveSpeed)][int(posY)] == 0: posX -= dirX * moveSpeed
-          if worldMap[int(posX)][int(posY - dirY * moveSpeed)] == 0: posY -= dirY * moveSpeed
-
-        if int(evt.key.keysym.scancode) == 4:  # A Key
-          var oldDirX : float = dirX
-          dirX = dirX * cos(rotSpeed) - dirY * sin(rotSpeed)
-          dirY = oldDirX * sin(rotSpeed) + dirY * cos(rotSpeed)
-          var oldPlaneX : float = planeX
-          planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed)
-          planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed)
-
-        if int(evt.key.keysym.scancode) == 7:  # D Key
-          var oldDirX : float = dirX
-          dirX = dirX * cos(-rotSpeed) - dirY * sin(-rotSpeed)
-          dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed)
-          var oldPlaneX : float = planeX
-          planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed)
-          planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed)
-
+  time = getTicks()
+  var diff : uint32 = time - oldTime
+  var frameTime : float32 = float32(diff) / 1000.0
   render.present
+
+  var moveSpeed : float32 = frameTime *  5.0
+  var rotSpeed : float32 = frameTime * 3.0
+
+  while pollEvent(evt):
+    if evt.kind == QuitEvent:
+      runGame = false
+      break
+    # LookUp table for ScanCodes -> https://wiki.libsdl.org/SDLScancode3Lookup
+    if evt.kind == KeyDown:
+      if int(evt.key.keysym.scancode) == 26: # W Key
+        if worldMap[int(posX + dirX * moveSpeed)][int(posY)] == 0: posX += dirX * moveSpeed
+        if worldMap[int(posX)][int(posY + dirY * moveSpeed)] == 0: posY += dirY * moveSpeed
+
+      if int(evt.key.keysym.scancode) == 22: # S Key
+        if worldMap[int(posX - dirX * moveSpeed)][int(posY)] == 0: posX -= dirX * moveSpeed
+        if worldMap[int(posX)][int(posY - dirY * moveSpeed)] == 0: posY -= dirY * moveSpeed
+
+      if int(evt.key.keysym.scancode) == 4:  # A Key
+        var oldDirX : float32 = dirX
+        dirX = dirX * cos(rotSpeed) - dirY * sin(rotSpeed)
+        dirY = oldDirX * sin(rotSpeed) + dirY * cos(rotSpeed)
+        var oldPlaneX : float32 = planeX
+        planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed)
+        planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed)
+
+      if int(evt.key.keysym.scancode) == 7:  # D Key
+        var oldDirX : float32 = dirX
+        dirX = dirX * cos(-rotSpeed) - dirY * sin(-rotSpeed)
+        dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed)
+        var oldPlaneX : float32 = planeX
+        planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed)
+        planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed)
+
 destroy render
 destroy window
 sdl2.quit()
