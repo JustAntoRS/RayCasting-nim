@@ -131,7 +131,7 @@ while runGame:
     else: color = [255,165,0,255] # Naranja
 
     if side == 1:
-      for i in 0..2:
+      for i in 0..2: # Change brigthness of the color
         color[i] = int(color[i] / 2)
 
     render.setDrawColor(uint8(color[0]),uint8(color[1]),uint8(color[2]),uint8(color[3]))
@@ -140,8 +140,8 @@ while runGame:
     time = getTicks()
     var diff : uint32 = time - oldTime
     var frameTime : float = float(diff) / 1000.0
-    var moveSpeed : float = frameTime *  10.0
-    var rotSpeed : float = frameTime * 3.0
+    var moveSpeed : float = frameTime *  20.0
+    var rotSpeed : float = frameTime * 6.0
 
     while pollEvent(evt):
       if evt.kind == QuitEvent:
@@ -149,28 +149,30 @@ while runGame:
         break
       # LookUp table for ScanCodes -> https://wiki.libsdl.org/SDLScancode3Lookup
       if evt.kind == KeyDown:
-        case int(evt.key.keysym.scancode)
-        of 26: # W Key
+        if int(evt.key.keysym.scancode) == 26: # W Key
           if worldMap[int(posX + dirX * moveSpeed)][int(posY)] == 0: posX += dirX * moveSpeed
           if worldMap[int(posX)][int(posY + dirY * moveSpeed)] == 0: posY += dirY * moveSpeed
-        of 22: # S Key
+
+        if int(evt.key.keysym.scancode) == 22: # S Key
           if worldMap[int(posX - dirX * moveSpeed)][int(posY)] == 0: posX -= dirX * moveSpeed
           if worldMap[int(posX)][int(posY - dirY * moveSpeed)] == 0: posY -= dirY * moveSpeed
-        of 4: # A Key
+
+        if int(evt.key.keysym.scancode) == 4:  # A Key
           var oldDirX : float = dirX
           dirX = dirX * cos(rotSpeed) - dirY * sin(rotSpeed)
           dirY = oldDirX * sin(rotSpeed) + dirY * cos(rotSpeed)
           var oldPlaneX : float = planeX
           planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed)
           planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed)
-        of 7: # D Key
+
+        if int(evt.key.keysym.scancode) == 7:  # D Key
           var oldDirX : float = dirX
           dirX = dirX * cos(-rotSpeed) - dirY * sin(-rotSpeed)
           dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed)
           var oldPlaneX : float = planeX
           planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed)
           planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed)
-        else: echo "tecla no soportada"
+
   render.present
 destroy render
 destroy window
