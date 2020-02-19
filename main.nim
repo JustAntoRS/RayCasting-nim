@@ -58,7 +58,7 @@ var
   planeY : float = 0.66
   time : uint32 = 0
   oldTime : uint32 = 0
-  color : array[4, int32] = [0,0,0,0]
+  color : array[4, int] = [0,0,0,0]
 
 # ------ MAIN LOOP ------
 
