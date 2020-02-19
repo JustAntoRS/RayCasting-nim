@@ -127,8 +127,7 @@ while runGame:
     of 1: color = [245,66,66,255] # Rojo
     of 2: color = [66,255,95,255] # Verde
     of 3: color = [66,81,245,255] # Azul
-
-of 4: color = [255,255,255,255] # Blanco
+    of 4: color = [255,255,255,255] # Blanco
     else: color = [255,165,0,255] # Naranja
 
     if side == 1:
