@@ -9,7 +9,7 @@ var
   window : WindowPtr
   render : RendererPtr
 
-window = createWindow("NIM RayCasting", 100,100,640,480, SDL_WINDOW_SHOWN or SDL_WINDOW_OPENGL)
+window = createWindow("NIM RayCasting",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,640,480, SDL_WINDOW_SHOWN or SDL_WINDOW_OPENGL)
 render = createRenderer(window, -1, Renderer_Accelerated or Renderer_PresentVsync)
 
 
@@ -50,12 +50,12 @@ var worldMap =[
 ]
 
 var
-  posX : cdouble = 22
-  posY : cdouble = 12
-  dirX : cdouble = -1
-  diry : cdouble =  0
-  planeX : cdouble = 0
-  planeY : cdouble = 0.66
+  posX : float32 = 22
+  posY : float32 = 12
+  dirX : float32 = -1
+  diry : float32 =  0
+  planeX : float32 = 0
+  planeY : float32 = 0.66
   time : uint32 = 0
   oldTime : uint32 = 0
 
@@ -69,16 +69,16 @@ while runGame:
   oldTime = time
   for x in 0..640:
     var
-      cameraX : cdouble = 2 * x / 640 - 1
-      rayDirX : cdouble = dirX + planeX * cameraX
-      rayDirY : cdouble = dirY + planeY * cameraX
+      cameraX : float32 = 2 * x / 640 - 1
+      rayDirX : float32 = dirX + planeX * cameraX
+      rayDirY : float32 = dirY + planeY * cameraX
       mapX : cint = cint(posX)
       mapY : cint = cint(posY)
-      sideDistX : cdouble
-      sideDistY : cdouble
-      deltaDistX : cdouble = abs(1 / rayDirX)
-      deltaDistY : cdouble = abs(1 / rayDirY)
-      perpWallDist : cdouble
+      sideDistX : float32
+      sideDistY : float32
+      deltaDistX : float32 = abs(1 / rayDirX)
+      deltaDistY : float32 = abs(1 / rayDirY)
+      perpWallDist : float32
       stepX : cint
       stepY : cint
       hit : cint = 0
@@ -86,17 +86,17 @@ while runGame:
 
     if rayDirX < 0:
       stepX = -1
-      sideDistX = (posX - cdouble(mapX)) * deltaDistX
+      sideDistX = (posX - float(mapX)) * deltaDistX
     else:
       stepX = 1
-      sideDistX = (cdouble(mapX) + 1.0 - posX) * deltaDistX
+      sideDistX = (float(mapX) + 1.0 - posX) * deltaDistX
 
     if rayDirY < 0:
       stepY = -1
-      sideDistY = (posY - cdouble(mapY)) * deltaDistY
+      sideDistY = (posY - float(mapY)) * deltaDistY
     else:
       stepY = 1
-      sideDistY = (cdouble(mapY) + 1.0 - posY) * deltaDistY
+      sideDistY = (float(mapY) + 1.0 - posY) * deltaDistY
 
     # DDA Algorithm
     while hit == 0:
@@ -143,39 +143,41 @@ while runGame:
   var frameTime : float = float(diff) / 1000.0
   render.present
 
-  var moveSpeed : float = frameTime *  5.0
+  var moveSpeed : float = frameTime *  7.0 
   var rotSpeed : float = frameTime * 3.0
 
   while pollEvent(evt):
     if evt.kind == QuitEvent:
       runGame = false
       break
+    
+  var keyState = getKeyBoardState()
+  if keyState[int SDL_SCANCODE_W] != 0:
+    if worldMap[int32(posX + dirX * moveSpeed)][int32(posY)] == 0: posX += dirX * moveSpeed
+    if worldMap[int32(posX)][int32(posY + dirY * moveSpeed)] == 0: posY += dirY * moveSpeed
+
+  if keyState[int SDL_SCANCODE_S] != 0:
+    if worldMap[int32(posX - dirX * moveSpeed)][int32(posY)] == 0: posX -= dirX * moveSpeed
+    if worldMap[int32(posX)][int32(posY - dirY * moveSpeed)] == 0: posY -= dirY * moveSpeed
+    
+  if keyState[int SDL_SCANCODE_D] != 0:
+    var oldDirX : float = dirX
+    dirX = dirX * cos(-rotSpeed) - dirY * sin(-rotSpeed)
+    dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed)
+    var oldPlaneX : float = planeX
+    planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed)
+    planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed)
+
+  if keyState[int SDL_SCANCODE_A] != 0:
+     var oldDirX : float = dirX
+     dirX = dirX * cos(rotSpeed) - dirY * sin(rotSpeed)
+     dirY = oldDirX * sin(rotSpeed) + dirY * cos(rotSpeed)
+     var oldPlaneX : float = planeX
+     planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed)
+     planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed)
+    
     # LookUp table for ScanCodes -> https://wiki.libsdl.org/SDLScancode3Lookup
-    if evt.kind == KeyDown:
-      if int32(evt.key.keysym.scancode) == 26: # W Key
-        if worldMap[int32(posX + dirX * moveSpeed)][int32(posY)] == 0: posX += dirX * moveSpeed
-        if worldMap[int32(posX)][int32(posY + dirY * moveSpeed)] == 0: posY += dirY * moveSpeed
-
-      if int32(evt.key.keysym.scancode) == 22: # S Key
-        if worldMap[int32(posX - dirX * moveSpeed)][int32(posY)] == 0: posX -= dirX * moveSpeed
-        if worldMap[int32(posX)][int32(posY - dirY * moveSpeed)] == 0: posY -= dirY * moveSpeed
-
-      if int32(evt.key.keysym.scancode) == 4:  # A Key
-        var oldDirX : float = dirX
-        dirX = dirX * cos(rotSpeed) - dirY * sin(rotSpeed)
-        dirY = oldDirX * sin(rotSpeed) + dirY * cos(rotSpeed)
-        var oldPlaneX : float = planeX
-        planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed)
-        planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed)
-
-      if int32(evt.key.keysym.scancode) == 7:  # D Key
-        var oldDirX : float = dirX
-        dirX = dirX * cos(-rotSpeed) - dirY * sin(-rotSpeed)
-        dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed)
-        var oldPlaneX : float = planeX
-        planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed)
-        planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed)
-
+    
 destroy render
 destroy window
 sdl2.quit()
