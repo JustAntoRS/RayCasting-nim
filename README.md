@@ -6,6 +6,11 @@ This is a Nim implementation of the [RayCasting tutorial](https://lodev.org/cgtu
 
 ## Actual State
 
-At the moment the code available is a direct translation from the code available in the tutorial to Nim, in the near future I will continue the tutorial and improve the engine with more features
+At this moment the program it just a direct translation from the code on the tutorial to Nim with some changes to adapt ir better to Nim cool features.
 
-The goal is to made an engine I can use to create some games because I really like the aesthetic of RayCasting :)
+## TODO
+
+- [ ] Textures
+- [ ] Map generation tool
+- [ ] Sprites
+
