@@ -1,7 +1,17 @@
-import sdl2
-import math
+import sdl2, math
 
-# ------ SDL2 CONF ------
+# My own type for creating Vectors 
+type
+  V_type = enum
+    v_int, # vector components are int
+    v_float # vector components are float
+  Vector2 = ref V_obj
+  V_obj = object
+    case type : V_type
+    of v_int : intX, intY : int
+    of v_float : floatX, floatY : float
+
+# ------ SDL2 CONF ------ 
 
 discard sdl2.init(INIT_EVERYTHING)
 
@@ -18,7 +28,7 @@ var
   runGame = true
 
 # ------ GAME DATA ------
-#[
+#[ Map Meaning:
   0 -> No wall
   Other -> Wall (each number is a color)
 ]#
@@ -50,12 +60,9 @@ var worldMap =[
 ]
 
 var
-  posX : float = 22 # X component of pos vector
-  posY : float = 12 # Y component of pos vector
-  dirX : float = -1 # X component of dir vector
-  diry : float =  0 # Y component of dir vector  
-  planeX : float = 0 # X component of plane vector
-  planeY : float = 0.66 # Y component of plane vector 
+  pos = Vector2(type : v_float, floatX : 22, floatY : 12) 
+  dir = Vector2(type: v_float, floatX : -1, floatY : 0)
+  plane = Vector2(type : v_float, floatX : 0, floatY : 0.66)
   time : uint32 = 0 
   oldTime : uint32 = 0 
 
@@ -71,68 +78,63 @@ while runGame:
   # RayCasting loop
   for x in 0..640:
     var
-      cameraX : float32 = 2 * x / 640 - 1 # x coordinate in camera space
+      cameraX : float = 2 * x / 640 - 1 # x coordinate in camera space
       # Calculate Ray Direction
-      rayDirX : float32 = dirX + planeX * cameraX
-      rayDirY : float32 = dirY + planeY * cameraX
+      rayDir = Vector2(type : v_float, floatX : dir.floatX + plane.floatX * cameraX, floatY : dir.floatY + plane.floatY * cameraX)
       # Which square of the map the ray is in
-      mapX : cint = cint(posX)
-      mapY : cint = cint(posY)
+      map = Vector2(type : v_int, intX : int pos.floatX, intY : int pos.floatY)
       # Length of the ray from current position to next x or y side
-      sideDistX : float32
-      sideDistY : float32
+      sideDist  = Vector2(type: v_float, floatX : 0 , floatY : 0)
       # Length of the ray from one x or y side to next x or y side
-      deltaDistX : float32 = abs(1 / rayDirX)
-      deltaDistY : float32 = abs(1 / rayDirY)
+      deltaDist = Vector2(type : v_float, floatX : abs(1/rayDir.floatX), floatY : abs(1/rayDir.floatY))
       perpWallDist : float32 # var to calcule length of the ray layer
       # Which direction must the ray move in (+1 or -1)
-      stepX : cint
-      stepY : cint
-      hit : cint = 0 # true(1) when the ray hit a wall 
-      side : cint # indicates if the ray hit a X side (0) or if a Y side(1) of a wall has been hit 
+      step = Vector2(type : v_int, intX : 0, intY : 0)
+      hit : int = 0 # true(1) when the ray hit a wall 
+      side : int # indicates if the ray hit a X side (0) or if a Y side(1) of a wall has been hit 
 
     # Calculate step and sideDist                                     
-    if rayDirX < 0:
-      stepX = -1
-      sideDistX = (posX - float(mapX)) * deltaDistX
+    if rayDir.floatX < 0:
+      step.intX = -1
+      sideDist.floatX = (pos.floatX - float map.intX) * deltaDist.floatX
     else:
-      stepX = 1
-      sideDistX = (float(mapX) + 1.0 - posX) * deltaDistX
+      step.intX = 1
+      sideDist.floatX = (float(map.intX) + 1.0 - pos.floatX) * deltaDist.floatX
 
-    if rayDirY < 0:
-      stepY = -1
-      sideDistY = (posY - float(mapY)) * deltaDistY
+    if rayDir.floatY < 0:
+      step.intY = -1
+      sideDist.floatY = (pos.floatY - float map.intY) * deltaDist.floatY
     else:
-      stepY = 1
-      sideDistY = (float(mapY) + 1.0 - posY) * deltaDistY
+      step.intY = 1
+      sideDist.floatY = (float(map.intY) + 1.0 - pos.floatY) * deltaDist.floatY
 
     # DDA Algorithm
     while hit == 0:
-      if sideDistX < sideDistY:
-        sideDistX += deltaDistX 
-        mapX += stepX
+      if sideDist.floatX < sideDist.floatY:
+        sideDist.floatX += deltaDist.floatX 
+        map.intX += step.intX
         side = 0
       else:
-        sideDistY += deltaDistY
-        mapY += stepY
+        sideDist.floatY += deltaDist.floatY
+        map.intY += step.intY
         side = 1
 
-      if worldMap[mapX][mapY] > 0 : hit = 1
+      if worldMap[map.intX][map.intY] > 0 : hit = 1
 
     if side == 0:
-      perpWallDist = (float(mapX) - posX + (1 - stepX) / 2) / rayDirX
+      perpWallDist = (float(map.intX) - pos.floatX + (1 - step.intX) / 2) / rayDir.floatX
     else:
-      perpWallDist = (float(mapY) - posY + (1 - stepY) / 2) / rayDirY
+      perpWallDist = (float(map.intY) - pos.floatY + (1 - step.intY) / 2) / rayDir.floatY
 
     var lineHeight : int = int(480 / perpWallDist)
-
     var drawStart : int = int(-lineHeight / 2 + 480 / 2)
+    
     if drawStart < 0: drawStart = 0
 
     var drawEnd : int = int(lineHeight / 2 + 480 / 2)
     if drawEnd >= 480: drawEnd = 480 - 1
 
-    case worldMap[mapX][mapY]
+    case worldMap[map.intX][map.intY]
     of 1: color = [245,66,66,255] # Rojo
     of 2: color = [66,255,95,255] # Verde
     of 3: color = [66,81,245,255] # Azul
@@ -165,28 +167,28 @@ while runGame:
   var keyState = getKeyBoardState() 
   
   if keyState[int SDL_SCANCODE_W] != 0:
-    if worldMap[int32(posX + dirX * moveSpeed)][int32(posY)] == 0: posX += dirX * moveSpeed
-    if worldMap[int32(posX)][int32(posY + dirY * moveSpeed)] == 0: posY += dirY * moveSpeed
+    if worldMap[int(pos.floatX + dir.floatX * moveSpeed)][int pos.floatY] == 0: pos.floatX += dir.floatX * moveSpeed
+    if worldMap[int pos.floatX][int(pos.floatY + dir.floatY * moveSpeed)] == 0: pos.floatY += dir.floatY * moveSpeed
 
   if keyState[int SDL_SCANCODE_S] != 0:
-    if worldMap[int32(posX - dirX * moveSpeed)][int32(posY)] == 0: posX -= dirX * moveSpeed
-    if worldMap[int32(posX)][int32(posY - dirY * moveSpeed)] == 0: posY -= dirY * moveSpeed
+    if worldMap[int(pos.floatX - dir.floatX * moveSpeed)][int pos.floatY] == 0: pos.floatX -= dir.floatX * moveSpeed
+    if worldMap[int pos.floatX][int(pos.floatY - dir.floatY * moveSpeed)] == 0: pos.floatY -= dir.floatY * moveSpeed
     
   if keyState[int SDL_SCANCODE_D] != 0:
-    var oldDirX : float = dirX
-    dirX = dirX * cos(-rotSpeed) - dirY * sin(-rotSpeed)
-    dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed)
-    var oldPlaneX : float = planeX
-    planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed)
-    planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed)
+    var oldDirX : float = dir.floatX
+    dir.floatX = dir.floatX * cos(-rotSpeed) - dir.floatY * sin(-rotSpeed)
+    dir.floatY = oldDirX * sin(-rotSpeed) + dir.floatY * cos(-rotSpeed)
+    var oldPlaneX : float = plane.floatX
+    plane.floatX = plane.floatX * cos(-rotSpeed) - plane.floatY * sin(-rotSpeed)
+    plane.floatY = oldPlaneX * sin(-rotSpeed) + plane.floatY * cos(-rotSpeed)
 
   if keyState[int SDL_SCANCODE_A] != 0:
-     var oldDirX : float = dirX
-     dirX = dirX * cos(rotSpeed) - dirY * sin(rotSpeed)
-     dirY = oldDirX * sin(rotSpeed) + dirY * cos(rotSpeed)
-     var oldPlaneX : float = planeX
-     planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed)
-     planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed)
+     var oldDirX : float = dir.floatX
+     dir.floatX = dir.floatX * cos(rotSpeed) - dir.floatY * sin(rotSpeed)
+     dir.floatY = oldDirX * sin(rotSpeed) + dir.floatY * cos(rotSpeed)
+     var oldPlaneX : float = plane.floatX
+     plane.floatX = plane.floatX * cos(rotSpeed) - plane.floatY * sin(rotSpeed)
+     plane.floatY = oldPlaneX * sin(rotSpeed) + plane.floatY * cos(rotSpeed)
     
     # LookUp table for ScanCodes -> https://wiki.libsdl.org/SDLScancode3Lookup
     

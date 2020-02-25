@@ -11,4 +11,4 @@ bin           = @["RayCasting"]
 
 # Dependencies
 
-requires "nim >= 1.0.6"
+requires "nim >= 1.0.6", "sdl >=2.0.2"
