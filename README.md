@@ -8,7 +8,7 @@ This is a Nim implementation of the [RayCasting tutorial](https://lodev.org/cgtu
 
 At this moment the program it just a direct translation from the code on the tutorial to Nim with some changes to adapt ir better to Nim cool features.
 
-## TODO
+## TODO List
 
 - [ ] Textures
 - [ ] Map generation tool
